@@ -17,7 +17,6 @@ class HairstyleTransfer:
     def __init__(self, device='cuda' if torch.cuda.is_available() else 'cpu'):
         self.device = device
         
-        print("⏳ Загрузка Stable Diffusion Inpainting...")
         self.pipe = StableDiffusionInpaintPipeline.from_pretrained(
             "runwayml/stable-diffusion-inpainting",
             torch_dtype=torch.float16 if device == 'cuda' else torch.float32,
@@ -53,8 +52,6 @@ class HairstyleTransfer:
         """
         Подготавливает маску для целевого изображения (где будет прическа).
         """
-        # В реальном проекте используем PSPNet для сегментации волос
-        # Пока простая маска
         
         target = cv2.imread(target_image_path)
         h, w = target.shape[:2]

@@ -4,7 +4,6 @@ from PIL import Image
 import warnings
 import os
 
-# Подавляем предупреждения
 warnings.filterwarnings('ignore', category=UserWarning, module='huggingface_hub')
 warnings.filterwarnings('ignore', category=FutureWarning)
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
@@ -12,14 +11,12 @@ os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
 class FaceShapeAnalyzer:
     """
-    Анализатор формы лица на основе модели metadome/face_shape_classification
+    Анализ формы лица на основе модели metadome/face_shape_classification
     """
     
     def __init__(self, device='cuda' if torch.cuda.is_available() else 'cpu'):
         self.device = device
         
-        print("⏳ Загрузка модели face_shape_classification...")
-        # ✅ ИСПРАВЛЕНО: Используем современный ViTImageProcessor
         self.processor = ViTImageProcessor.from_pretrained(
             "metadome/face_shape_classification"
         )
@@ -27,7 +24,6 @@ class FaceShapeAnalyzer:
             "metadome/face_shape_classification"
         ).to(self.device)
         self.model.eval()
-        print(f"✅ Модель загружена на {self.device}")
     
     def analyze(self, image_path):
         """
@@ -39,7 +35,6 @@ class FaceShapeAnalyzer:
         except Exception as e:
             return None, f"Ошибка загрузки изображения: {e}", None
         
-        # ✅ Предобработка через современный процессор
         inputs = self.processor(images=image, return_tensors="pt")
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
         
@@ -72,33 +67,33 @@ class FaceShapeAnalyzer:
         """Возвращает рекомендации по прическе"""
         recommendations = {
             "Овал": [
-                "✅ Подходит большинство причесок",
-                "✅ Длинные волосы с объемом",
-                "✅ Короткие стрижки (каре, боб)"
+                " Подходит большинство причесок",
+                " Длинные волосы с объемом",
+                " Короткие стрижки (каре, боб)"
             ],
             "Круглый": [
-                "✅ Объем на макушке (удлиняет лицо)",
-                "✅ Асимметричные стрижки",
-                "✅ Длинные волосы с косым пробором",
-                "⚠️ Избегайте объема по бокам"
+                " Объем на макушке (удлиняет лицо)",
+                " Асимметричные стрижки",
+                " Длинные волосы с косым пробором",
+                " Избегайте объема по бокам"
             ],
             "Квадрат": [
-                "✅ Мягкие волны и кудри",
-                "✅ Асимметричные челки",
-                "✅ Длинные волосы с объемом",
-                "⚠️ Избегайте прямых линий у челюсти"
+                " Мягкие волны и кудри",
+                " Асимметричные челки",
+                " Длинные волосы с объемом",
+                " Избегайте прямых линий у челюсти"
             ],
             "Сердце": [
-                "✅ Объем у подбородка (каре)",
-                "✅ Боковой пробор",
-                "✅ Мягкие волны",
-                "⚠️ Избегайте объема на макушке"
+                " Объем у подбородка (каре)",
+                " Боковой пробор",
+                " Мягкие волны",
+                " Избегайте объема на макушке"
             ],
             "Продолговатый": [
-                "✅ Короткие стрижки (до подбородка)",
-                "✅ Челка (скрывает длину)",
-                "✅ Волнистые волосы",
-                "⚠️ Избегайте длинных прямых волос"
+                " Короткие стрижки (до подбородка)",
+                " Челка (скрывает длину)",
+                " Волнистые волосы",
+                " Избегайте длинных прямых волос"
             ]
         }
         return recommendations.get(shape, ["Нет рекомендаций"])
@@ -109,16 +104,7 @@ if __name__ == "__main__":
     shape, confidence, probs = analyzer.analyze('data/input.jpeg')
     
     if shape:
-        print(f"\n{'='*60}")
-        print(f"📊 ФОРМА ЛИЦА: {shape.upper()} ({confidence:.1%})")
-        print(f"{'='*60}")
-        print(f"\nВероятности всех классов:")
-        for cls, prob in sorted(probs.items(), key=lambda x: x[1], reverse=True):
-            marker = "🟢" if cls == shape else "⚪"
-            print(f"   {marker} {cls:12s}: {prob:.1%}")
-        print(f"\n💡 РЕКОМЕНДАЦИИ ПО ПРИЧЕСКАМ:")
         for rec in analyzer.get_recommendations(shape):
             print(f"   {rec}")
-        print(f"{'='*60}\n")
     else:
         print(f"❌ Ошибка: {confidence}")
