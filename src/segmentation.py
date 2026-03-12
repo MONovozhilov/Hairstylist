@@ -49,7 +49,7 @@ class HairSegmenter:
         im_tensor = self.transform(image_resized).unsqueeze(0)
         return im_tensor.to(self.device)
 
-    def predict(self, image_path, output_path='results/hair_only.png'):
+    def predict(self, image_path, output_path='results/hair_only.png', mask_path='results/hair_mask.png'):
         input_tensor = self.preprocess_image(image_path)
         
         with torch.no_grad():
@@ -63,13 +63,18 @@ class HairSegmenter:
         mask_pil = Image.fromarray(mask)
         mask_full = mask_pil.resize(self.orig_size, Image.BILINEAR)
         
-        # Создаем RGBA изображение
+        # ✅ Сохраняем ЧИСТУЮ маску
+        os.makedirs(os.path.dirname(mask_path), exist_ok=True)
+        mask_full.save(mask_path)
+        print(f"✅ Hair mask saved to {mask_path}")
+        
+        # Создаем RGBA изображение с альфа-каналом
         original = Image.open(image_path).convert('RGBA')
         original.putalpha(mask_full)
         
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         original.save(output_path)
-        print(f"✅ Hair mask saved to {output_path}")
+        print(f"✅ Hair with alpha saved to {output_path}")
         
         return mask_full
 
@@ -77,6 +82,6 @@ class HairSegmenter:
 if __name__ == "__main__":
     segmenter = HairSegmenter()
     if os.path.exists('data/input.jpeg'):
-        segmenter.predict('data/input.jpeg', 'results/hair_only.png')
+        segmenter.predict('data/input.jpeg', 'results/hair_only.png', 'results/hair_mask.png')
     else:
         print("❌ Please put an image at data/input.jpeg")
