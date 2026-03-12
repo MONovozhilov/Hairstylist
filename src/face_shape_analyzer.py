@@ -107,4 +107,4 @@ if __name__ == "__main__":
         for rec in analyzer.get_recommendations(shape):
             print(f"   {rec}")
     else:
-        print(f"❌ Ошибка: {confidence}")
+        print(f"Ошибка: {confidence}")
