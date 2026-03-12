@@ -23,9 +23,7 @@ class HairstyleTransfer:
             torch_dtype=torch.float16 if device == 'cuda' else torch.float32,
             safety_checker=None
         )
-        self.pipe = self.pipe.to(self.device)
-        print(f"✅ Stable Diffusion загружен на {self.device}")
-    
+        self.pipe = self.pipe.to(self.device)    
     def extract_hair_from_reference(self, reference_image_path, expand_pixels=20):
         """
         Выделяет прическу из "донорского" фото (с использованием сегментации).
@@ -96,16 +94,12 @@ class HairstyleTransfer:
         Возвращает:
             PIL изображение с перенесённой прической
         """
-        print(f"\n🎨 Перенос прически...")
-        print(f"   Целевое изображение: {target_image_path}")
-        print(f"   Донорское изображение: {reference_image_path}")
-        
+
         # Загрузка изображений
         target = Image.open(target_image_path).convert("RGB")
         reference = Image.open(reference_image_path).convert("RGB")
         
         # Подготовка масок
-        print("⏳ Подготовка масок...")
         target_mask = self.prepare_target_mask(target_image_path)
         reference_hair_mask = self.extract_hair_from_reference(reference_image_path)
         
@@ -115,11 +109,7 @@ class HairstyleTransfer:
         # Изменение размера до 512х512 (для Stable Diffusion)
         target_resized = target.resize((512, 512))
         mask_resized = mask_pil.resize((512, 512))
-        
-        print("⏳ Запуск генерации с переносом стиля...")
-        
-        # Генерация с использованием reference image как дополнительного промпта
-        # В простом режиме используем текстовый промпт, описывающий прическу
+                
         result = self.pipe(
             prompt=prompt,
             image=target_resized,
@@ -130,15 +120,11 @@ class HairstyleTransfer:
             strength=strength
         ).images[0]
         
-        print("✅ Генерация завершена!")
-        
         # Восстановление оригинального размера
         result_full = result.resize(target.size, Image.BILINEAR)
         
-        # Сохранение результата
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         result_full.save(output_path)
-        print(f"✅ Результат сохранён: {output_path}")
         
         return result_full
     
@@ -150,16 +136,9 @@ class HairstyleTransfer:
                                  num_inference_steps=50,
                                  guidance_scale=7.5,
                                  output_path='results/hairstyle_transferred_ip.png'):
-        """
-        Перенос прически с использованием IP-Adapter (более точный перенос стиля).
-        
-        Требует установки: pip install ip-adapter
-        """
         try:
             from ip_adapter import IPAdapter
-            
-            print("⏳ Загрузка IP-Adapter...")
-            
+                        
             # Загрузка изображений
             target = Image.open(target_image_path).convert("RGB")
             reference = Image.open(reference_image_path).convert("RGB")
@@ -172,9 +151,7 @@ class HairstyleTransfer:
             target_resized = target.resize((512, 512))
             reference_resized = reference.resize((512, 512))
             mask_resized = mask_pil.resize((512, 512))
-            
-            print("⏳ Запуск генерации с IP-Adapter...")
-            
+                        
             # Генерация с использованием reference image
             result = self.pipe(
                 prompt=prompt,
@@ -183,32 +160,21 @@ class HairstyleTransfer:
                 negative_prompt=negative_prompt,
                 num_inference_steps=num_inference_steps,
                 guidance_scale=guidance_scale,
-                ip_adapter_image=reference_resized  # IP-Adapter image prompt
+                ip_adapter_image=reference_resized
             ).images[0]
             
             result_full = result.resize(target.size, Image.BILINEAR)
-            result_full.save(output_path)
-            print(f"✅ Результат сохранён: {output_path}")
-            
+            result_full.save(output_path)            
             return result_full
             
         except ImportError:
-            print("⚠️ IP-Adapter не установлен. Установите: pip install ip-adapter")
-            print("Используем обычный режим...")
             return self.transfer_hairstyle(
                 target_image_path, reference_image_path,
                 prompt, negative_prompt,
                 num_inference_steps, guidance_scale,
                 output_path=output_path
             )
-
-
-# ============================================================================
-# Примеры использования
-# ============================================================================
-
 if __name__ == "__main__":
-    # Создание трансферера
     transfer = HairstyleTransfer()
     
     # Перенос прически
